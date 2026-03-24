@@ -3,53 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Solihah - Adzan GPS</title>
-    
-    <meta name="theme-color" content="#000000">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Solihah%22,%22short_name%22:%22Solihah%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#000000%22,%22theme_color%22:%22#000000%22}">
-
+    <title>Solihah - Sukasari Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
+        body { background: #000; color: #fff; font-family: sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.07); }
-        .btn-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+        .active-glow { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-6 text-center">
 
     <div id="setup" class="w-full max-w-sm">
-        <div class="mb-10">
-            <div class="w-24 h-24 bg-gradient-to-tr from-blue-700 to-blue-400 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 btn-glow rotate-12">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21l-8.228-9.917c-.49-.59-.772-1.348-.772-2.132C3 7.335 4.343 6 6 6c1.244 0 2.348.61 3 1.543C9.652 6.61 10.756 6 12 6s2.348.61 3 1.543C15.652 6.61 16.756 6 18 6c1.657 0 3 1.335 3 2.951 0 .784-.282 1.542-.772 2.132L12 21z" />
-                </svg>
-            </div>
-            <h1 class="text-4xl font-black tracking-tighter mb-2">SOLIHAH</h1>
-            <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Jadwal Adzan Akurat & Otomatis</p>
-        </div>
-        <button onclick="initSolihah()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-3xl transition-all active:scale-95 text-lg">
-            AKTIFKAN GPS
+        <h1 class="text-4xl font-black mb-6 tracking-tighter">SOLIHAH</h1>
+        <button onclick="initSolihah()" class="w-full bg-blue-600 text-white font-black py-5 rounded-3xl active:scale-95 transition shadow-lg">
+            KONFIRMASI LOKASI & GPS
         </button>
+        <p class="text-gray-500 text-[10px] mt-4 uppercase tracking-widest font-bold">Pastikan GPS aktif di Sukasari</p>
     </div>
 
     <div id="main-ui" class="hidden w-full max-w-sm">
         <div class="mb-8">
             <div class="flex items-center justify-center gap-2 mb-2">
-                <span class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping"></span>
-                <p id="city" class="text-blue-400 font-black tracking-[0.2em] text-[10px] uppercase italic">Mendeteksi...</p>
+                <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                <p id="city" class="text-blue-500 font-black tracking-[0.2em] text-[10px] uppercase italic">Mendeteksi...</p>
             </div>
-            <h2 id="countdown" class="text-7xl font-black tracking-tighter my-2 leading-none">00:00:00</h2>
-            <div id="target-name" class="inline-block px-5 py-1 rounded-full bg-blue-900/30 text-blue-400 font-bold text-[9px] tracking-widest uppercase italic border border-blue-800/50">Memuat...</div>
+            
+            <h1 id="main-clock" class="text-7xl font-black tracking-tighter leading-none mb-4">00:00:00</h1>
+            
+            <div class="inline-block px-6 py-2 rounded-2xl bg-blue-900/30 border border-blue-500/20 active-glow">
+                <p id="target-name" class="text-[9px] font-bold text-blue-400 uppercase tracking-widest mb-1">Menuju ---</p>
+                <p id="countdown" class="text-2xl font-mono font-bold text-white tracking-widest leading-none">00:00:00</p>
+            </div>
         </div>
 
-        <div id="times-list" class="space-y-2.5 mb-8 text-left"></div>
+        <div id="times-list" class="space-y-2 text-left"></div>
 
-        <div class="pt-6 border-t border-white/5">
-            <p id="real-clock" class="text-2xl font-mono font-bold text-gray-500 tracking-widest">00:00:00</p>
-            <p id="real-date" class="text-[9px] text-gray-700 font-bold uppercase tracking-[0.3em] mt-1"></p>
-        </div>
+        <p id="real-date" class="mt-8 text-[9px] text-gray-700 font-black uppercase tracking-[0.4em]"></p>
     </div>
 
     <audio id="adzan-audio" src="https://www.islamcan.com/common/adzan/makkah.mp3" preload="auto"></audio>
@@ -60,12 +49,12 @@
         const audio = document.getElementById('adzan-audio');
 
         function initSolihah() {
-            // Pancing audio
             audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
-            
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(success, () => alert("GPS Mati!"), { 
-                    enableHighAccuracy: true 
+                navigator.geolocation.getCurrentPosition(success, error, { 
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0 
                 });
             }
         }
@@ -75,28 +64,33 @@
             document.getElementById('main-ui').classList.remove('hidden');
             const {latitude, longitude} = pos.coords;
 
-            // Update Nama Lokasi Akurat
+            // REVERSE GEOCODING (Cari nama jalan/desa/kecamatan)
             try {
                 const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
                 const data = await geo.json();
-                document.getElementById('city').innerText = data.address.village || data.address.suburb || data.address.city_district || "Lokasi Aktif";
-            } catch(e) { document.getElementById('city').innerText = "Jakarta"; }
+                // Mengambil nama area paling spesifik (Sukasari)
+                const area = data.address.village || data.address.suburb || data.address.city_district || data.address.city;
+                document.getElementById('city').innerText = area;
+            } catch(e) { document.getElementById('city').innerText = "Lokasi Aktif"; }
 
-            // Ambil Jadwal
+            // AMBIL JADWAL ADZAN BERDASARKAN KOORDINAT GPS
             const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=20`);
             const d = await res.json();
             prayerData = d.data.timings;
             
             renderList();
-            setInterval(tick, 1000);
-            tick();
+            setInterval(updateTick, 1000);
+            updateTick();
         }
 
-        function tick() {
+        function error() { alert("Gagal mendeteksi Sukasari. Cek izin lokasi di Chrome."); }
+
+        function updateTick() {
             const now = new Date();
             const currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
             
-            document.getElementById('real-clock').innerText = now.toLocaleTimeString('en-GB', { hour12: false });
+            // JAM BESAR (JAM SEKARANG)
+            document.getElementById('main-clock').innerText = now.toLocaleTimeString('en-GB', { hour12: false });
             document.getElementById('real-date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
 
             if (prayerData) {
@@ -110,18 +104,11 @@
                     const [h, m] = s.t.split(':');
                     const pSec = parseInt(h) * 3600 + parseInt(m) * 60;
 
-                    // PAS WAKTU ADZAN
-                    if (pSec === currentSec) {
-                        audio.play();
-                        if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
-                    }
-
-                    // PENGINGAT 5 MENIT (300 Detik)
-                    if (pSec - currentSec === 300 && !reminded) {
-                        if (navigator.vibrate) navigator.vibrate(500);
-                        reminded = true;
-                        setTimeout(() => reminded = false, 2000);
-                    }
+                    // AKTIFKAN ADZAN
+                    if (pSec === currentSec) { audio.play(); if(navigator.vibrate) navigator.vibrate([500,200,500]); }
+                    
+                    // GETAR 5 MENIT SEBELUMNYA
+                    if (pSec - currentSec === 300 && !reminded) { if(navigator.vibrate) navigator.vibrate(500); reminded = true; }
 
                     if (pSec > currentSec) { next = { n: s.n, t: pSec }; break; }
                 }
@@ -131,6 +118,7 @@
                     next = { n: sch[0].n, t: (parseInt(h) * 3600 + parseInt(m) * 60) + 86400 };
                 }
 
+                // UPDATE HITUNG MUNDUR (DI DALAM KOTAK BIRU)
                 const diff = next.t - currentSec;
                 const h = Math.floor(diff / 3600).toString().padStart(2,'0');
                 const m = Math.floor((diff % 3600) / 60).toString().padStart(2,'0');
@@ -144,8 +132,8 @@
         function renderList() {
             const items = [{l:'Subuh',v:prayerData.Fajr}, {l:'Dzuhur',v:prayerData.Dhuhr}, {l:'Ashar',v:prayerData.Asr}, {l:'Maghrib',v:prayerData.Maghrib}, {l:'Isya',v:prayerData.Isha}];
             document.getElementById('times-list').innerHTML = items.map(i => `
-                <div class="flex justify-between items-center glass p-4 rounded-3xl transition-all active:bg-blue-900/20">
-                    <span class="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">${i.l}</span>
+                <div class="flex justify-between items-center glass p-4 rounded-3xl">
+                    <span class="text-[9px] font-black text-gray-600 uppercase tracking-widest">${i.l}</span>
                     <span class="text-xl font-mono font-bold text-blue-400">${i.v}</span>
                 </div>
             `).join('');
