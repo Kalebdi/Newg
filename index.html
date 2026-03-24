@@ -3,78 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Solihah — Minimalist Adzan</title>
+    <title>Solihah — Global Precision</title>
     
-    <meta name="theme-color" content="#000000">
-    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Solihah%22,%22short_name%22:%22Solihah%22,%22display%22:%22standalone%22,%22background_color%22:%22#000000%22,%22theme_color%22:%22#000000%22}">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;800&display=swap" rel="stylesheet">
     
     <style>
-        body { 
-            background: radial-gradient(circle at top right, #1e1e1e, #000); 
-            color: #fff; 
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            overflow: hidden;
-        }
-        .glass { 
-            background: rgba(255, 255, 255, 0.02); 
-            border: 1px solid rgba(255, 255, 255, 0.05); 
-            backdrop-filter: blur(10px);
-        }
-        .glow-text { text-shadow: 0 0 30px rgba(59, 130, 246, 0.3); }
-        .gradient-text {
-            background: linear-gradient(to bottom, #fff, #666);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        body { background: #000; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); }
+        .glow-text { text-shadow: 0 0 40px rgba(59, 130, 246, 0.4); }
+        .gradient-text { background: linear-gradient(to bottom, #fff, #444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-8 text-center">
 
-    <div id="setup" class="w-full max-w-xs animate-pulse">
-        <h1 class="text-4xl font-extrabold tracking-tighter mb-8">SOLIHAH</h1>
-        <button onclick="initSolihah()" class="w-full border border-white/20 py-5 rounded-full font-bold text-xs uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all duration-500">
-            Sinkronisasi GPS
+    <div id="setup" class="w-full max-w-xs">
+        <h1 class="text-4xl font-extrabold tracking-tighter mb-8 italic">SOLIHAH</h1>
+        <button onclick="initSolihah()" class="w-full border border-white/20 py-5 rounded-full font-bold text-[10px] uppercase tracking-[0.4em] active:bg-white active:text-black transition-all">
+            DETEKSI LOKASI GLOBAL
         </button>
     </div>
 
     <div id="main-ui" class="hidden w-full max-w-sm flex flex-col items-center">
-        
-        <div class="flex items-center gap-3 mb-4 opacity-60">
-            <div class="w-1 h-1 bg-blue-500 rounded-full"></div>
-            <p id="city" class="text-[10px] font-bold uppercase tracking-[0.4em]">Mencari...</p>
+        <div class="flex items-center gap-2 mb-4 opacity-70">
+            <div class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+            <p id="city" class="text-[9px] font-black uppercase tracking-[0.5em] italic">Mencari Koordinat...</p>
         </div>
 
         <h1 id="main-clock" class="text-8xl font-extrabold tracking-tighter leading-none mb-10 glow-text italic">00:00</h1>
         
-        <div class="glass w-full py-6 rounded-[2.5rem] mb-10">
-            <p id="target-name" class="text-[9px] font-bold text-gray-500 uppercase tracking-[0.5em] mb-2">---</p>
-            <p id="countdown" class="text-4xl font-light tracking-widest gradient-text">00:00:00</p>
+        <div class="glass w-full py-8 rounded-[3rem] mb-10">
+            <p id="target-name" class="text-[8px] font-black text-blue-500 uppercase tracking-[0.6em] mb-2 italic">---</p>
+            <p id="countdown" class="text-5xl font-light tracking-widest gradient-text">00:00:00</p>
         </div>
 
-        <div id="times-list" class="grid grid-cols-5 gap-2 w-full mb-10">
-            </div>
+        <div id="times-list" class="grid grid-cols-5 gap-2 w-full mb-10 px-2"></div>
 
-        <p id="real-date" class="text-[9px] text-gray-700 font-bold uppercase tracking-[0.5em] mt-auto pt-10"></p>
+        <p id="real-date" class="text-[8px] text-gray-700 font-black uppercase tracking-[0.6em] mt-auto"></p>
     </div>
 
     <audio id="adzan-audio" src="https://www.islamcan.com/common/adzan/makkah.mp3" preload="auto"></audio>
 
     <script>
         let prayerData = null;
-        let reminded = false;
         const audio = document.getElementById('adzan-audio');
 
         function initSolihah() {
             audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
             
-            // GPS Akurasi Tinggi (Like Google Maps)
+            // Setting GPS paling sensitif (Akurasi Maksimal)
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(success, error, { 
+                navigator.geolocation.getCurrentPosition(success, () => alert("GPS Error! Cek Izin."), { 
                     enableHighAccuracy: true, 
-                    timeout: 20000, 
+                    timeout: 30000, 
                     maximumAge: 0 
                 });
             }
@@ -85,15 +66,21 @@
             document.getElementById('main-ui').classList.remove('hidden');
             const {latitude, longitude} = pos.coords;
 
-            // Ambil Nama Lokasi (Sukasari)
+            // REVERSE GEOCODING LEVEL MAX (Mendeteksi Nama Jalan/Desa/Kota di Manapun)
             try {
-                const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
                 const data = await geo.json();
-                const area = data.address.village || data.address.suburb || data.address.city_district || "Sukasari";
-                document.getElementById('city').innerText = area;
-            } catch(e) { document.getElementById('city').innerText = "Lokasi Aktif"; }
+                
+                // Algoritma untuk mencari nama tempat paling akurat (dekat)
+                const addr = data.address;
+                const namaTempat = addr.road || addr.village || addr.suburb || addr.city_district || addr.city || addr.state || "Lokasi Global";
+                
+                document.getElementById('city').innerText = namaTempat.toUpperCase();
+            } catch(e) { 
+                document.getElementById('city').innerText = "KOORDINAT AKTIF"; 
+            }
 
-            // Jadwal
+            // Ambil Jadwal berdasarkan Koordinat Eksak
             const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=20`);
             const d = await res.json();
             prayerData = d.data.timings;
@@ -103,13 +90,10 @@
             updateAll();
         }
 
-        function error() { alert("GPS Gagal. Pastikan izin lokasi aktif."); }
-
         function updateAll() {
             const now = new Date();
             const currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
             
-            // Jam Digital (Hanya Jam:Menit untuk estetika, Detik di countdown)
             const h = now.getHours().toString().padStart(2, '0');
             const m = now.getMinutes().toString().padStart(2, '0');
             document.getElementById('main-clock').innerText = `${h}:${m}`;
@@ -145,17 +129,11 @@
         }
 
         function renderList() {
-            const items = [
-                {l:'Sub', v:prayerData.Fajr}, 
-                {l:'Dzu', v:prayerData.Dhuhr}, 
-                {l:'Ash', v:prayerData.Asr}, 
-                {l:'Mag', v:prayerData.Maghrib}, 
-                {l:'Isy', v:prayerData.Isha}
-            ];
+            const items = [{l:'Sub', v:prayerData.Fajr}, {l:'Dzu', v:prayerData.Dhuhr}, {l:'Ash', v:prayerData.Asr}, {l:'Mag', v:prayerData.Maghrib}, {l:'Isy', v:prayerData.Isha}];
             document.getElementById('times-list').innerHTML = items.map(i => `
                 <div class="flex flex-col items-center">
-                    <span class="text-[7px] text-gray-600 font-bold uppercase mb-1 tracking-widest">${i.l}</span>
-                    <span class="text-[11px] font-mono font-bold text-gray-400">${i.v}</span>
+                    <span class="text-[7px] text-gray-700 font-black uppercase mb-1 tracking-widest">${i.l}</span>
+                    <span class="text-[10px] font-mono font-bold text-gray-400 italic">${i.v}</span>
                 </div>
             `).join('');
         }
