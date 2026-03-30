@@ -1,6 +1,5 @@
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
@@ -9,7 +8,6 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Parameter lat dan lon diperlukan' });
     }
     try {
-        // Gunakan API Aladhan dengan metode 20 (Kemenag RI)
         const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=20`;
         const response = await fetch(url);
         const data = await response.json();
