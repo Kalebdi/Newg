@@ -8,26 +8,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; min-height: 100vh; }
-        .glass { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); }
-        .glow-text { text-shadow: 0 0 40px rgba(59, 130, 246, 0.4); }
+        body { background: #000; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; }
+        .glass { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(20px); }
+        .glow-text { text-shadow: 0 0 40px rgba(59,130,246,0.4); }
         .gradient-text { background: linear-gradient(to bottom, #fff, #444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .loading-spinner { border: 2px solid rgba(255,255,255,0.1); border-top-color: #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; margin: 0 auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .city-suggestion { position: absolute; top: 100%; left: 0; right: 0; background: rgba(0,0,0,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; max-height: 350px; overflow-y: auto; z-index: 50; backdrop-filter: blur(10px); }
-        .city-suggestion div { padding: 12px 16px; cursor: pointer; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: all 0.2s; }
-        .city-suggestion div:hover { background: rgba(59,130,246,0.3); }
-        .city-suggestion .country { color: #3b82f6; font-size: 10px; margin-left: 8px; }
-        .city-suggestion .type { color: #888; font-size: 9px; margin-left: 8px; }
-        .score-bar { height: 2px; background: #3b82f6; margin-top: 4px; border-radius: 2px; }
+        .suggestion-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: all 0.2s; }
+        .suggestion-item:hover { background: rgba(59,130,246,0.3); }
+        .suggestions-box { position: absolute; top: 100%; left: 0; right: 0; background: rgba(0,0,0,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; max-height: 300px; overflow-y: auto; z-index: 50; backdrop-filter: blur(10px); }
+        input:focus { outline: none; border-color: #3b82f6; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.5); border-radius: 10px; }
-        input:focus { outline: none; border-color: #3b82f6; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-8 text-center">
 
+    <!-- Halaman Awal -->
     <div id="setup" class="w-full max-w-xs">
         <h1 class="text-4xl font-extrabold tracking-tighter mb-8 italic">SOLIHAH</h1>
         
@@ -36,131 +34,145 @@
         </button>
         
         <div class="mt-4 w-full">
-            <div class="relative w-full">
-                <input type="text" id="citySearch" placeholder="Cari kota di seluruh dunia... contoh: istanbul turkey, munjul, tokyo jepang" 
+            <div class="relative">
+                <input type="text" id="searchInput" 
+                       placeholder="Cari kota... contoh: istanbul turkey, munjul, tokyo" 
                        class="w-full bg-black/50 border border-white/20 rounded-full py-3 px-5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-blue-500"
-                       onkeyup="smartSearch()"
-                       onkeypress="if(event.key === 'Enter') searchSelectedCity()"
+                       onkeyup="doSearch()"
+                       onkeypress="if(event.key === 'Enter') selectFirstResult()"
                        autocomplete="off">
-                <button onclick="searchSelectedCity()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-600 text-white text-xs px-4 py-1 rounded-full hover:bg-blue-700 transition">
-                    Cari
-                </button>
-                <div id="suggestions" class="city-suggestion hidden"></div>
+                <div id="suggestions" class="suggestions-box hidden"></div>
             </div>
-            <p class="text-[8px] text-gray-500 mt-2">✨ Pencarian pintar: mengerti salah ketik, urutan acak, semua negara</p>
-            <p class="text-[8px] text-gray-600 mt-1">Atau <button onclick="showManualInput()" class="text-blue-400 underline">masukkan koordinat manual</button></p>
+            <p class="text-[8px] text-gray-500 mt-3">✨ Cerdas: bisa salah ketik, urutan acak, semua negara</p>
+            <p class="text-[8px] text-gray-600 mt-1">Atau <button onclick="showManual()" class="text-blue-400 underline">koordinat manual</button></p>
         </div>
         
-        <div id="manual-input" class="hidden mt-4">
-            <input type="text" id="latInput" placeholder="Lintang" class="w-full p-2 bg-black/50 border border-white/20 rounded text-white text-sm mb-2">
-            <input type="text" id="lonInput" placeholder="Bujur" class="w-full p-2 bg-black/50 border border-white/20 rounded text-white text-sm mb-2">
-            <button onclick="useManualCoordinates()" class="bg-blue-600 px-4 py-2 rounded-full text-xs w-full">Gunakan Koordinat Ini</button>
+        <div id="manualBox" class="hidden mt-4">
+            <input type="text" id="latInput" placeholder="Lintang (-6.2088)" class="w-full p-2 bg-black/50 border border-white/20 rounded text-white text-sm mb-2">
+            <input type="text" id="lonInput" placeholder="Bujur (106.8456)" class="w-full p-2 bg-black/50 border border-white/20 rounded text-white text-sm mb-2">
+            <button onclick="useManual()" class="bg-blue-600 px-4 py-2 rounded-full text-xs w-full">Gunakan</button>
         </div>
         
-        <div id="loading-indicator" class="hidden mt-4">
-            <div class="loading-spinner"></div>
-            <p class="text-[10px] text-gray-400 mt-2">Mencari lokasi...</p>
-        </div>
+        <div id="loading" class="hidden mt-4"><div class="loading-spinner"></div><p class="text-[10px] text-gray-400 mt-2">Mencari...</p></div>
     </div>
 
-    <div id="main-ui" class="hidden w-full max-w-sm flex flex-col items-center">
+    <!-- Halaman Utama -->
+    <div id="main" class="hidden w-full max-w-sm flex flex-col items-center">
         <div class="flex items-center gap-2 mb-4 opacity-70">
             <div class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-            <p id="city" class="text-[9px] font-black uppercase tracking-[0.5em] italic">Memuat...</p>
+            <p id="locName" class="text-[9px] font-black uppercase tracking-[0.5em] italic">Memuat...</p>
         </div>
-        <h1 id="main-clock" class="text-8xl font-extrabold tracking-tighter leading-none mb-10 glow-text italic">00:00</h1>
+        <h1 id="clock" class="text-8xl font-extrabold tracking-tighter leading-none mb-10 glow-text italic">00:00</h1>
         <div class="glass w-full py-8 rounded-[3rem] mb-10">
-            <p id="target-name" class="text-[8px] font-black text-blue-500 uppercase tracking-[0.6em] mb-2 italic">---</p>
+            <p id="nextName" class="text-[8px] font-black text-blue-500 uppercase tracking-[0.6em] mb-2 italic">---</p>
             <p id="countdown" class="text-5xl font-light tracking-widest gradient-text">00:00:00</p>
         </div>
-        <div id="times-list" class="grid grid-cols-5 gap-2 w-full mb-10 px-2"></div>
-        <p id="real-date" class="text-[8px] text-gray-700 font-black uppercase tracking-[0.6em] mt-auto"></p>
-        <p id="location-coord" class="text-[6px] text-gray-800 mt-2"></p>
+        <div id="timesList" class="grid grid-cols-5 gap-2 w-full mb-10 px-2"></div>
+        <p id="date" class="text-[8px] text-gray-700 font-black uppercase tracking-[0.6em] mt-auto"></p>
+        <p id="coord" class="text-[6px] text-gray-800 mt-2"></p>
         <button onclick="backToSetup()" class="mt-4 text-[8px] text-gray-600 underline">Ubah Lokasi</button>
     </div>
 
-    <audio id="adzan-audio" preload="auto">
-        <source src="https://www.islamcan.com/common/adzan/makkah.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="adzan" preload="auto"><source src="https://www.islamcan.com/common/adzan/makkah.mp3"></audio>
 
     <script>
-        let prayerData = null, timerInterval = null;
-        const audio = document.getElementById('adzan-audio');
+        let prayerData = null, timer = null, currentLat = null, currentLon = null;
+        let searchResults = [];
+        const audio = document.getElementById('adzan');
         
-        async function fetchFromAPI(endpoint, params) {
-            const url = new URL(endpoint, window.location.origin);
-            Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return await res.json();
-        }
-        
-        let debounceTimer;
-        window.smartSearch = async function() {
-            clearTimeout(debounceTimer);
-            const query = document.getElementById('citySearch').value.trim();
-            if (query.length < 2) {
+        // PENCARIAN PINTAR - langsung panggil Nominatim API
+        let searchTimeout;
+        window.doSearch = function() {
+            clearTimeout(searchTimeout);
+            const q = document.getElementById('searchInput').value.trim();
+            if (q.length < 2) {
                 document.getElementById('suggestions').classList.add('hidden');
                 return;
             }
-            debounceTimer = setTimeout(async () => {
+            
+            searchTimeout = setTimeout(async () => {
+                const loadingDiv = document.getElementById('loading');
+                loadingDiv.classList.remove('hidden');
+                
                 try {
-                    const data = await fetchFromAPI('/api/smart-search', { q: query });
-                    if (data.success && data.results && data.results.length > 0) {
+                    // Panggil Nominatim langsung dari browser
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8&addressdetails=1&accept-language=id`;
+                    const res = await fetch(url, { headers: { 'User-Agent': 'Solihah-App' } });
+                    const data = await res.json();
+                    loadingDiv.classList.add('hidden');
+                    
+                    if (data && data.length > 0) {
+                        searchResults = data;
                         const suggestionsDiv = document.getElementById('suggestions');
-                        suggestionsDiv.innerHTML = data.results.map(city => `
-                            <div onclick="selectCity(${city.lat}, ${city.lon}, '${escapeHtml(city.fullName)}')">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <span class="font-medium">${escapeHtml(city.name)}</span>
-                                        <span class="country">${escapeHtml(city.country || '')}</span>
-                                        <span class="type">${city.type || ''}</span>
-                                    </div>
-                                    <span class="text-[8px] text-gray-500">${city.score}</span>
+                        suggestionsDiv.innerHTML = data.map((item, i) => {
+                            let displayName = item.display_name;
+                            if (displayName.length > 60) displayName = displayName.substring(0, 60) + '...';
+                            return `<div class="suggestion-item" onclick="selectResult(${i})">
+                                <div class="flex justify-between">
+                                    <span class="font-medium">${escapeHtml(item.display_name.split(',')[0])}</span>
+                                    <span class="text-[9px] text-blue-400">${item.address?.country || ''}</span>
                                 </div>
-                                <div class="text-[9px] text-gray-400">${escapeHtml(city.fullName.substring(0, 60))}...</div>
-                                <div class="score-bar" style="width: ${Math.min(city.score / 2, 100)}%"></div>
-                            </div>
-                        `).join('');
+                                <div class="text-[10px] text-gray-400">${escapeHtml(displayName)}</div>
+                            </div>`;
+                        }).join('');
                         suggestionsDiv.classList.remove('hidden');
                     } else {
-                        document.getElementById('suggestions').innerHTML = '<div class="p-3 text-center text-gray-500">Tidak ditemukan. Coba kata kunci lain.</div>';
+                        document.getElementById('suggestions').innerHTML = '<div class="p-4 text-center text-gray-500">Tidak ditemukan. Coba kata lain.</div>';
                         document.getElementById('suggestions').classList.remove('hidden');
                     }
                 } catch (err) {
+                    loadingDiv.classList.add('hidden');
                     console.error(err);
+                    document.getElementById('suggestions').innerHTML = '<div class="p-4 text-center text-red-400">Gagal mencari. Cek koneksi.</div>';
+                    document.getElementById('suggestions').classList.remove('hidden');
                 }
-            }, 300);
-        }
+            }, 400);
+        };
         
-        function escapeHtml(str) { return str?.replace(/[&<>]/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m]; }) || ''; }
+        window.selectResult = function(index) {
+            const item = searchResults[index];
+            if (item) {
+                const lat = parseFloat(item.lat);
+                const lon = parseFloat(item.lon);
+                const name = item.display_name;
+                document.getElementById('searchInput').value = name;
+                document.getElementById('suggestions').classList.add('hidden');
+                proceedWithLocation(lat, lon, name);
+            }
+        };
         
-        window.selectCity = function(lat, lon, name) {
-            document.getElementById('citySearch').value = name;
-            document.getElementById('suggestions').classList.add('hidden');
-            proceedWithCoordinates(lat, lon, name);
-        }
+        window.selectFirstResult = function() {
+            if (searchResults && searchResults.length > 0) {
+                selectResult(0);
+            } else {
+                // Coba langsung cari
+                const q = document.getElementById('searchInput').value.trim();
+                if (q) searchDirectly(q);
+            }
+        };
         
-        window.searchSelectedCity = async function() {
-            const query = document.getElementById('citySearch').value.trim();
-            if (!query) return;
-            const loading = document.getElementById('loading-indicator');
+        async function searchDirectly(q) {
+            const loading = document.getElementById('loading');
             loading.classList.remove('hidden');
             try {
-                const data = await fetchFromAPI('/api/smart-search', { q: query });
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1&addressdetails=1`;
+                const res = await fetch(url, { headers: { 'User-Agent': 'Solihah-App' } });
+                const data = await res.json();
                 loading.classList.add('hidden');
-                if (data.success && data.results && data.results.length > 0) {
-                    const best = data.results[0];
-                    proceedWithCoordinates(best.lat, best.lon, best.fullName);
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    proceedWithLocation(lat, lon, data[0].display_name);
                 } else {
                     alert("Lokasi tidak ditemukan. Coba kata kunci lain.");
                 }
             } catch (err) {
                 loading.classList.add('hidden');
-                alert("Gagal mencari lokasi. Periksa koneksi.");
+                alert("Gagal mencari lokasi.");
             }
         }
         
+        // GPS
         window.initGPS = function() {
             if (!navigator.geolocation) { alert("GPS tidak didukung"); return; }
             const btn = document.getElementById('gpsBtn');
@@ -172,64 +184,149 @@
                     btn.disabled = false;
                     const { latitude, longitude } = pos.coords;
                     try {
-                        const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                        const data = await geo.json();
-                        proceedWithCoordinates(latitude, longitude, data.display_name || "Lokasi GPS");
-                    } catch { proceedWithCoordinates(latitude, longitude, "Lokasi GPS"); }
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                        const data = await res.json();
+                        proceedWithLocation(latitude, longitude, data.display_name || "Lokasi GPS");
+                    } catch {
+                        proceedWithLocation(latitude, longitude, `GPS: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                    }
                 },
-                (err) => { btn.innerText = "📍 DETEKSI LOKASI GPS"; btn.disabled = false; alert("Gagal GPS: " + err.message); }
+                (err) => {
+                    btn.innerText = "📍 DETEKSI LOKASI GPS";
+                    btn.disabled = false;
+                    alert("Gagal GPS: " + err.message);
+                }
             );
-        }
+        };
         
-        window.showManualInput = () => document.getElementById('manual-input').classList.toggle('hidden');
-        window.useManualCoordinates = () => {
+        window.showManual = () => document.getElementById('manualBox').classList.toggle('hidden');
+        window.useManual = () => {
             const lat = parseFloat(document.getElementById('latInput').value);
             const lon = parseFloat(document.getElementById('lonInput').value);
             if (isNaN(lat) || isNaN(lon)) { alert("Koordinat tidak valid"); return; }
-            proceedWithCoordinates(lat, lon, `Manual: ${lat}, ${lon}`);
-        }
-        window.backToSetup = () => { if (timerInterval) clearInterval(timerInterval); document.getElementById('main-ui').classList.add('hidden'); document.getElementById('setup').classList.remove('hidden'); prayerData = null; }
+            proceedWithLocation(lat, lon, `Manual: ${lat}, ${lon}`);
+        };
+        window.backToSetup = () => {
+            if (timer) clearInterval(timer);
+            document.getElementById('main').classList.add('hidden');
+            document.getElementById('setup').classList.remove('hidden');
+            prayerData = null;
+        };
         
-        async function proceedWithCoordinates(lat, lon, locationName) {
+        async function proceedWithLocation(lat, lon, name) {
             document.getElementById('setup').classList.add('hidden');
-            document.getElementById('main-ui').classList.remove('hidden');
-            document.getElementById('city').innerText = locationName.toUpperCase().substring(0, 40);
-            document.getElementById('location-coord').innerHTML = `${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
+            document.getElementById('main').classList.remove('hidden');
+            document.getElementById('locName').innerHTML = name.toUpperCase().substring(0, 50);
+            document.getElementById('coord').innerHTML = `${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
+            currentLat = lat;
+            currentLon = lon;
+            
+            // Ambil jadwal shalat
             try {
-                const data = await fetchFromAPI('/api/prayer-times', { lat, lon });
-                if (data.success && data.timings) {
-                    prayerData = data.timings;
-                    renderList();
-                    if (timerInterval) clearInterval(timerInterval);
-                    timerInterval = setInterval(updateAll, 1000);
-                    updateAll();
-                } else throw new Error("Data tidak valid");
-            } catch (err) { alert("Gagal ambil jadwal shalat"); }
+                const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=20`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.code === 200 && data.data && data.data.timings) {
+                    prayerData = data.data.timings;
+                    renderTimes();
+                    if (timer) clearInterval(timer);
+                    timer = setInterval(updateClock, 1000);
+                    updateClock();
+                } else {
+                    throw new Error("Data tidak valid");
+                }
+            } catch (err) {
+                alert("Gagal mengambil jadwal shalat. Periksa koneksi.");
+            }
         }
         
-        function renderList() {
+        function renderTimes() {
             if (!prayerData) return;
-            const items = [{l:'Subuh',v:prayerData.Fajr},{l:'Dzuhur',v:prayerData.Dhuhr},{l:'Ashar',v:prayerData.Asr},{l:'Maghrib',v:prayerData.Maghrib},{l:'Isya',v:prayerData.Isha}];
-            document.getElementById('times-list').innerHTML = items.map(i => `<div class="flex flex-col items-center"><span class="text-[7px] text-gray-700 uppercase mb-1">${i.l}</span><span class="text-[10px] font-mono text-gray-400 italic">${i.v}</span></div>`).join('');
+            const list = [
+                { name: 'Subuh', time: prayerData.Fajr },
+                { name: 'Dzuhur', time: prayerData.Dhuhr },
+                { name: 'Ashar', time: prayerData.Asr },
+                { name: 'Maghrib', time: prayerData.Maghrib },
+                { name: 'Isya', time: prayerData.Isha }
+            ];
+            document.getElementById('timesList').innerHTML = list.map(i => `
+                <div class="flex flex-col items-center">
+                    <span class="text-[7px] text-gray-700 uppercase mb-1">${i.name}</span>
+                    <span class="text-[10px] font-mono text-gray-400">${i.time}</span>
+                </div>
+            `).join('');
         }
         
-        function updateAll() {
+        function updateClock() {
             const now = new Date();
-            document.getElementById('main-clock').innerText = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-            document.getElementById('real-date').innerHTML = now.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+            const jam = now.getHours().toString().padStart(2,'0');
+            const menit = now.getMinutes().toString().padStart(2,'0');
+            document.getElementById('clock').innerHTML = `${jam}:${menit}`;
+            document.getElementById('date').innerHTML = now.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+            
             if (!prayerData) return;
-            const schedule = [{n:'Subuh',t:prayerData.Fajr},{n:'Dzuhur',t:prayerData.Dhuhr},{n:'Ashar',t:prayerData.Asr},{n:'Maghrib',t:prayerData.Maghrib},{n:'Isya',t:prayerData.Isha}];
-            const currentSec = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
-            let timesSec = schedule.map(s => { let [sh,sm]=s.t.split(':'); return {n:s.n, sec:parseInt(sh)*3600+parseInt(sm)*60}; });
-            let next = timesSec.find(t => t.sec > currentSec) || { ...timesSec[0], sec: timesSec[0].sec + 86400 };
-            timesSec.forEach(t => { if(t.sec === currentSec) audio.play().catch(()=>{}); });
-            let diff = next.sec - currentSec;
-            document.getElementById('countdown').innerText = `${Math.floor(diff/3600).toString().padStart(2,'0')}:${Math.floor((diff%3600)/60).toString().padStart(2,'0')}:${(diff%60).toString().padStart(2,'0')}`;
-            document.getElementById('target-name').innerHTML = `Menuju ${next.n}`;
+            
+            const schedule = [
+                { name: 'Subuh', time: prayerData.Fajr },
+                { name: 'Dzuhur', time: prayerData.Dhuhr },
+                { name: 'Ashar', time: prayerData.Asr },
+                { name: 'Maghrib', time: prayerData.Maghrib },
+                { name: 'Isya', time: prayerData.Isha }
+            ];
+            
+            const currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+            let timesSec = schedule.map(s => {
+                let [h, m] = s.time.split(':');
+                return { name: s.name, sec: parseInt(h) * 3600 + parseInt(m) * 60 };
+            });
+            
+            // Cari waktu berikutnya
+            let next = null;
+            for (let i = 0; i < timesSec.length; i++) {
+                if (timesSec[i].sec > currentSec) {
+                    next = timesSec[i];
+                    break;
+                }
+            }
+            if (!next) {
+                next = { ...timesSec[0], sec: timesSec[0].sec + 86400 };
+            }
+            
+            // Cek waktu adzan
+            for (let i = 0; i < timesSec.length; i++) {
+                if (timesSec[i].sec === currentSec) {
+                    audio.play().catch(() => {});
+                    break;
+                }
+            }
+            
+            const diff = next.sec - currentSec;
+            const dh = Math.floor(diff / 3600).toString().padStart(2,'0');
+            const dm = Math.floor((diff % 3600) / 60).toString().padStart(2,'0');
+            const ds = (diff % 60).toString().padStart(2,'0');
+            
+            document.getElementById('countdown').innerHTML = `${dh}:${dm}:${ds}`;
+            document.getElementById('nextName').innerHTML = `Menuju ${next.name}`;
         }
         
-        document.addEventListener('click', function(e) { if(!document.getElementById('citySearch').contains(e.target)) document.getElementById('suggestions').classList.add('hidden'); });
-        window.addEventListener('beforeunload', () => { if(timerInterval) clearInterval(timerInterval); });
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        // Sembunyikan saran saat klik di luar
+        document.addEventListener('click', function(e) {
+            if (!document.getElementById('searchInput').contains(e.target)) {
+                document.getElementById('suggestions').classList.add('hidden');
+            }
+        });
+        
+        window.addEventListener('beforeunload', () => { if (timer) clearInterval(timer); });
     </script>
 </body>
 </html>
