@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Solihah — Waktu Shalat Presisi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;800&display=swap" rel="stylesheet">
+    <style>
+        body { background: #000; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); }
+        .glow-text { text-shadow: 0 0 40px rgba(59, 130, 246, 0.4); }
+        .gradient-text { background: linear-gradient(to bottom, #fff, #444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        #loading-spinner { border: 2px solid rgba(255,255,255,0.1); border-top-color: #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; margin: 0 auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-8 text-center">
+
+    <!-- Tampilan awal -->
+    <div id="setup" class="w-full max-w-xs">
+        <h1 class="text-4xl font-extrabold tracking-tighter mb-8 italic">SOLIHAH</h1>
+        
+        <!-- Tombol GPS -->
+        <button onclick="initGPS()" class="w-full border border-white/20 py-5 rounded-full font-bold text-[10px] uppercase tracking-[0.4em] active:bg-white active:text-black transition-all mb-4">
+            DETEKSI LOKASI GPS
+        </button>
+        
+        <!-- Pencarian Kota -->
+        <div class="mt-4 w-full">
+            <div class="relative w-full">
+                <input type="text" id="citySearch" placeholder="Cari kota, misal: Tangerang, Jakarta, Surabaya" 
+                       class="w-full bg-black/50 border border-white/20 rounded-full py-3 px-5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-blue-500">
+                <button onclick="searchCity()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-600 text-white text-xs px-4 py-1 rounded-full">
+                    Cari
+                </button>
+            </div>
+            <p class="text-[8px] text-gray-500 mt-2">Atau <button onclick="showManualInput()" class="text-blue-400 underline">masukkan koordinat manual</button></p>
+        </div>
+        
+        <div id="manual-input" class="hidden mt-4">
+            <input type="text" id="latInput" placeholder="Lintang (contoh: -6.2088)" class="w-full p-2 bg-black/50 border border-white/20 rounded text-white text-sm mb-2">
+            <input type="text" id="lonInput" placeholder="Bujur (contoh: 106.8456)" class="w-full p-2 bg-black/50 border border-white/20 rounded text-white text-sm mb-2">
+            <button onclick="useManualCoordinates()" class="bg-blue-600 px-4 py-2 rounded-full text-xs w-full">Gunakan Koordinat Ini</button>
+        </div>
+        
+        <div id="loading-indicator" class="hidden mt-4 text-[10px] text-gray-400">Mencari lokasi...</div>
+    </div>
+
+    <!-- UI utama -->
+    <div id="main-ui" class="hidden w-full max-w-sm flex flex-col items-center">
+        <div class="flex items-center gap-2 mb-4 opacity-70">
+            <div class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+            <p id="city" class="text-[9px] font-black uppercase tracking-[0.5em] italic">Mencari Koordinat...</p>
+        </div>
+
+        <h1 id="main-clock" class="text-8xl font-extrabold tracking-tighter leading-none mb-10 glow-text italic">00:00</h1>
+        
+        <div class="glass w-full py-8 rounded-[3rem] mb-10">
+            <p id="target-name" class="text-[8px] font-black text-blue-500 uppercase tracking-[0.6em] mb-2 italic">---</p>
+            <p id="countdown" class="text-5xl font-light tracking-widest gradient-text">00:00:00</p>
+        </div>
+
+        <div id="times-list" class="grid grid-cols-5 gap-2 w-full mb-10 px-2"></div>
+
+        <p id="real-date" class="text-[8px] text-gray-700 font-black uppercase tracking-[0.6em] mt-auto"></p>
+        <p id="location-coord" class="text-[6px] text-gray-800 mt-2"></p>
+    </div>
+
+    <audio id="adzan-audio" preload="auto">
+        <source src="https://www.islamcan.com/common/adzan/makkah.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        let prayerData = null;
+        let timerInterval = null;
+        const audio = document.getElementById('adzan-audio');
+
+        // Helper: fetch dari backend
+        async function fetchFromAPI(endpoint, params = {}) {
+            const url = new URL(endpoint, window.location.origin);
+            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`API error: ${res.status}`);
+            return await res.json();
+        }
+
+        // Tampilkan manual input
+        window.showManualInput = function() {
+            document.getElementById('manual-input').classList.toggle('hidden');
+        }
+
+        // Gunakan koordinat manual
+        window.useManualCoordinates = function() {
+            const lat = parseFloat(document.getElementById('latInput').value);
+            const lon = parseFloat(document.getElementById('lonInput').value);
+            if (isNaN(lat) || isNaN(lon)) {
+                alert("Masukkan lintang dan bujur yang valid.");
+                return;
+            }
+            proceedWithCoordinates(lat, lon);
+        }
+
+        // Pencarian kota via backend
+        window.searchCity = async function() {
+            const query = document.getElementById('citySearch').value.trim();
+            if (!query) {
+                alert("Masukkan nama kota.");
+                return;
+            }
+            const loading = document.getElementById('loading-indicator');
+            loading.classList.remove('hidden');
+            try {
+                const data = await fetchFromAPI('/api/search-city', { q: query });
+                if (data && data.lat && data.lon) {
+                    loading.classList.add('hidden');
+                    document.getElementById('setup').classList.add('hidden');
+                    document.getElementById('main-ui').classList.remove('hidden');
+                    document.getElementById('city').innerText = data.display_name.toUpperCase();
+                    processCoordinates(data.lat, data.lon);
+                } else {
+                    loading.classList.add('hidden');
+                    alert("Kota tidak ditemukan.");
+                }
+            } catch (err) {
+                loading.classList.add('hidden');
+                console.error(err);
+                alert("Gagal mencari kota. Coba lagi nanti.");
+            }
+        }
+
+        // GPS
+        window.initGPS = function() {
+            audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(e => {});
+            if (!navigator.geolocation) {
+                alert("Browser tidak mendukung GPS.");
+                return;
+            }
+            const btn = document.querySelector('#setup button:first-of-type');
+            const originalText = btn.innerText;
+            btn.innerText = "MENDAPATKAN LOKASI...";
+            btn.disabled = true;
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    document.getElementById('setup').classList.add('hidden');
+                    document.getElementById('main-ui').classList.remove('hidden');
+                    processCoordinates(pos.coords.latitude, pos.coords.longitude);
+                },
+                (err) => {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    alert("Gagal mendapatkan lokasi. Gunakan pencarian kota atau input manual.");
+                },
+                { enableHighAccuracy: true, timeout: 15000 }
+            );
+        }
+
+        // Proses setelah punya koordinat
+        async function processCoordinates(lat, lon) {
+            document.getElementById('location-coord').innerText = `${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
+            // Ambil jadwal dari backend
+            try {
+                const prayerRes = await fetchFromAPI('/api/prayer-times', { lat, lon });
+                if (prayerRes && prayerRes.timings) {
+                    prayerData = prayerRes.timings;
+                    renderList();
+                    if (timerInterval) clearInterval(timerInterval);
+                    timerInterval = setInterval(updateAll, 1000);
+                    updateAll();
+                } else {
+                    throw new Error("Data jadwal tidak lengkap");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Gagal mengambil jadwal shalat. Periksa koneksi.");
+                document.getElementById('target-name').innerText = "GAGAL MUAT JADWAL";
+                document.getElementById('countdown').innerText = "00:00:00";
+            }
+        }
+
+        function proceedWithCoordinates(lat, lon) {
+            document.getElementById('setup').classList.add('hidden');
+            document.getElementById('main-ui').classList.remove('hidden');
+            processCoordinates(lat, lon);
+        }
+
+        function renderList() {
+            if (!prayerData) return;
+            const items = [
+                {l:'Subuh', v:prayerData.Fajr},
+                {l:'Dzuhur', v:prayerData.Dhuhr},
+                {l:'Ashar', v:prayerData.Asr},
+                {l:'Maghrib', v:prayerData.Maghrib},
+                {l:'Isya', v:prayerData.Isha}
+            ];
+            document.getElementById('times-list').innerHTML = items.map(i => `
+                <div class="flex flex-col items-center">
+                    <span class="text-[7px] text-gray-700 font-black uppercase mb-1 tracking-widest">${i.l}</span>
+                    <span class="text-[10px] font-mono font-bold text-gray-400 italic">${i.v}</span>
+                </div>
+            `).join('');
+        }
+
+        function updateAll() {
+            const now = new Date();
+            const currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+            const h = now.getHours().toString().padStart(2,'0');
+            const m = now.getMinutes().toString().padStart(2,'0');
+            document.getElementById('main-clock').innerText = `${h}:${m}`;
+            document.getElementById('real-date').innerText = now.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+            if (!prayerData) return;
+            const sch = [
+                {n:'Subuh', t:prayerData.Fajr}, {n:'Dzuhur', t:prayerData.Dhuhr},
+                {n:'Ashar', t:prayerData.Asr}, {n:'Maghrib', t:prayerData.Maghrib}, {n:'Isya', t:prayerData.Isha}
+            ];
+            let timesSec = sch.map(s => {
+                let [sh, sm] = s.t.split(':');
+                return { n: s.n, sec: parseInt(sh)*3600 + parseInt(sm)*60 };
+            });
+            let next = null;
+            for (let i=0; i<timesSec.length; i++) {
+                if (timesSec[i].sec > currentSec) { next = timesSec[i]; break; }
+            }
+            if (!next) next = { ...timesSec[0], sec: timesSec[0].sec + 86400 };
+            for (let i=0; i<timesSec.length; i++) {
+                if (timesSec[i].sec === currentSec) audio.play().catch(e=>{});
+            }
+            const diff = next.sec - currentSec;
+            const dh = Math.floor(diff/3600).toString().padStart(2,'0');
+            const dm = Math.floor((diff%3600)/60).toString().padStart(2,'0');
+            const ds = (diff%60).toString().padStart(2,'0');
+            document.getElementById('countdown').innerText = `${dh}:${dm}:${ds}`;
+            document.getElementById('target-name').innerText = `Menuju ${next.n}`;
+        }
+        window.addEventListener('beforeunload', () => { if (timerInterval) clearInterval(timerInterval); });
+    </script>
+</body>
+</html>
