@@ -1,5 +1,7 @@
 {
   "name": "solihah-app",
   "version": "1.0.0",
-  "type": "module"
+  "description": "Aplikasi jadwal shalat dengan geolokasi",
+  "type": "module",
+  "main": "api/search-city.js"
 }
