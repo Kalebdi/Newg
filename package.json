@@ -1,0 +1,6 @@
+{
+    "name": "solihah-app",
+    "version": "1.0.0",
+    "description": "Prayer times app with geocoding",
+    "type": "module"
+}
