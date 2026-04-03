@@ -3,80 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Solihah — Waktu Shalat Presisi</title>
+    <title>Solihah — Presisi & Elegan</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; }
-        .glass { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(20px); }
-        .glow-text { text-shadow: 0 0 40px rgba(59,130,246,0.4); }
-        .gradient-text { background: linear-gradient(to bottom, #fff, #444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .loading-spinner { border: 2px solid rgba(255,255,255,0.1); border-top-color: #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; margin: 0 auto; }
+        :root { --accent: #3b82f6; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background: #000; 
+            color: #fff; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background Decor */
+        .bg-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(0,0,0,0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Glassmorphism */
+        .glass { 
+            background: rgba(255,255,255,0.03); 
+            border: 1px solid rgba(255,255,255,0.08); 
+            backdrop-filter: blur(20px); 
+        }
+
+        .glow-text { text-shadow: 0 0 30px rgba(59,130,246,0.6); }
+        
+        .gradient-text { 
+            background: linear-gradient(to bottom, #fff 30%, #94a3b8 100%); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        }
+
+        /* Animation */
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .loading-spinner { 
+            border: 2px solid rgba(255,255,255,0.1); 
+            border-top-color: var(--accent); 
+            border-radius: 50%; 
+            width: 28px; height: 28px; 
+            animation: spin 0.8s linear infinite; 
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .suggestion-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: all 0.2s; }
-        .suggestion-item:hover { background: rgba(59,130,246,0.3); }
-        .suggestions-box { position: absolute; top: 100%; left: 0; right: 0; background: rgba(0,0,0,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; max-height: 300px; overflow-y: auto; z-index: 50; backdrop-filter: blur(10px); }
-        input:focus { outline: none; border-color: #3b82f6; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+
+        /* Custom Input & Suggestions */
+        input::placeholder { color: #475569; }
+        .suggestion-item { 
+            padding: 16px; 
+            border-bottom: 1px solid rgba(255,255,255,0.05); 
+            transition: 0.2s;
+        }
+        .suggestion-item:last-child { border: none; }
+        .suggestion-item:active { background: rgba(59,130,246,0.2); }
+
+        .btn-interact {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-interact:active { transform: scale(0.96); opacity: 0.8; }
+
+        /* Typography */
+        .font-mono-custom { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-8 text-center">
+<body class="flex flex-col items-center justify-center p-6">
+    <div class="bg-glow"></div>
 
-    <!-- Halaman Awal -->
-    <div id="setup" class="w-full max-w-xs">
-        <h1 class="text-4xl font-extrabold tracking-tighter mb-8 italic">SOLIHAH</h1>
+    <!-- UI SETUP -->
+    <div id="setup" class="w-full max-w-sm fade-in">
+        <header class="mb-12 text-center">
+            <h1 class="text-5xl font-extrabold tracking-tighter italic mb-2">SOLIHAH</h1>
+            <p class="text-[10px] uppercase tracking-[0.4em] text-blue-500 font-bold">Precision Prayer Times</p>
+        </header>
         
-        <!-- Tombol GPS dengan Indikator Akurasi -->
-        <button onclick="initGPS()" id="gpsBtn" class="w-full border border-white/20 py-5 rounded-full font-bold text-[10px] uppercase tracking-[0.4em] hover:bg-white/10 active:bg-white active:text-black transition-all mb-4">
-            📍 DETEKSI LOKASI GPS (PRESISI)
-        </button>
-        
-        <div class="mt-4 w-full">
-            <div class="relative">
-                <input type="text" id="searchInput" 
-                       placeholder="Cari kota... contoh: Jakarta, Munjul, Tokyo" 
-                       class="w-full bg-black/50 border border-white/20 rounded-full py-3 px-5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-blue-500"
-                       onkeyup="doSearch()"
-                       onkeypress="if(event.key === 'Enter') selectFirstResult()"
-                       autocomplete="off">
-                <div id="suggestions" class="suggestions-box hidden"></div>
+        <div class="space-y-4">
+            <button onclick="initGPS()" id="gpsBtn" class="btn-interact w-full glass py-5 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-3 border-blue-500/20">
+                <span class="text-blue-500">📍</span> Deteksi GPS Presisi
+            </button>
+
+            <div class="relative group">
+                <input type="text" id="searchInput" onkeyup="doSearch()" 
+                    placeholder="Cari Kota / Desa / Alamat..." 
+                    class="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-all shadow-inner">
+                <div id="suggestions" class="absolute top-full left-0 right-0 mt-2 glass rounded-2xl overflow-hidden hidden z-50 shadow-2xl"></div>
             </div>
-            <p class="text-[8px] text-gray-500 mt-3">✨ Cerdas: bisa salah ketik, urutan acak, semua negara</p>
-            <p class="text-[8px] text-gray-600 mt-1">Atau <button onclick="showManual()" class="text-blue-400 underline">koordinat manual</button></p>
+
+            <div class="text-center">
+                <button onclick="showManual()" class="text-[10px] uppercase tracking-widest text-gray-500 hover:text-blue-400 transition">Atau Koordinat Manual</button>
+            </div>
+
+            <div id="manualBox" class="hidden space-y-2 pt-2 fade-in">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="latInput" placeholder="Lat" class="bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-center">
+                    <input type="text" id="lonInput" placeholder="Lon" class="bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-center">
+                </div>
+                <button onclick="useManual()" class="w-full bg-white text-black font-bold py-4 rounded-xl text-xs uppercase tracking-widest btn-interact">Terapkan</button>
+            </div>
         </div>
-        
-        <div id="manualBox" class="hidden mt-4">
-            <input type="text" id="latInput" placeholder="Lintang (-6.2088)" class="w-full p-2 bg-black/50 border border-white/20 rounded text-white text-sm mb-2">
-            <input type="text" id="lonInput" placeholder="Bujur (106.8456)" class="w-full p-2 bg-black/50 border border-white/20 rounded text-white text-sm mb-2">
-            <button onclick="useManual()" class="bg-blue-600 px-4 py-2 rounded-full text-xs w-full">Gunakan</button>
+
+        <div id="loading" class="hidden mt-10 flex flex-col items-center gap-3">
+            <div class="loading-spinner"></div>
+            <p id="loadingText" class="text-[9px] uppercase tracking-widest text-gray-500">Menyelaraskan Sinyal...</p>
         </div>
-        
-        <div id="loading" class="hidden mt-4"><div class="loading-spinner"></div><p id="loadingText" class="text-[10px] text-gray-400 mt-2">Mencari...</p></div>
     </div>
 
-    <!-- Halaman Utama -->
-    <div id="main" class="hidden w-full max-w-sm flex flex-col items-center">
-        <div class="flex items-center gap-2 mb-4 opacity-70">
-            <div class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-            <p id="locName" class="text-[9px] font-black uppercase tracking-[0.5em] italic">Memuat...</p>
+    <!-- UI MAIN -->
+    <div id="main" class="hidden w-full max-w-md fade-in flex flex-col items-center">
+        <div class="mb-8 flex flex-col items-center">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-1 h-1 bg-blue-500 rounded-full animate-ping"></span>
+                <p id="locName" class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 truncate max-w-[250px] text-center">---</p>
+            </div>
+            <h1 id="clock" class="text-8xl font-black tracking-tighter leading-none glow-text gradient-text">00:00</h1>
         </div>
-        <h1 id="clock" class="text-8xl font-extrabold tracking-tighter leading-none mb-10 glow-text italic">00:00</h1>
-        <div class="glass w-full py-8 rounded-[3rem] mb-10">
-            <p id="nextName" class="text-[8px] font-black text-blue-500 uppercase tracking-[0.6em] mb-2 italic">---</p>
-            <p id="countdown" class="text-5xl font-light tracking-widest gradient-text">00:00:00</p>
+
+        <div class="w-full glass rounded-[2.5rem] p-10 mb-10 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent"></div>
+            <p id="nextName" class="text-[9px] font-black text-blue-500 uppercase tracking-[0.5em] mb-4">---</p>
+            <p id="countdown" class="text-6xl font-light tracking-tight font-mono-custom mb-2">00:00:00</p>
+            <p class="text-[8px] text-gray-600 uppercase tracking-widest font-bold">Menuju Waktu Shalat</p>
         </div>
-        <div id="timesList" class="grid grid-cols-5 gap-2 w-full mb-10 px-2"></div>
-        
-        <div class="mt-auto">
-            <p id="date" class="text-[8px] text-gray-700 font-black uppercase tracking-[0.6em]"></p>
-            <p id="coord" class="text-[6px] text-gray-800 mt-2"></p>
-            <p id="accuracyLabel" class="text-[6px] text-blue-900 mt-1 uppercase tracking-widest"></p>
-        </div>
-        
-        <button onclick="backToSetup()" class="mt-4 text-[8px] text-gray-600 underline">Ubah Lokasi</button>
+
+        <div id="timesList" class="grid grid-cols-5 gap-2 w-full mb-12"></div>
+
+        <footer class="w-full border-t border-white/5 pt-8 flex flex-col items-center gap-3">
+            <p id="date" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest"></p>
+            <div class="flex gap-4">
+                <p id="coord" class="text-[8px] text-gray-700 font-mono-custom"></p>
+                <p id="accuracyLabel" class="text-[8px] text-blue-900 font-bold uppercase"></p>
+            </div>
+            <button onclick="backToSetup()" class="btn-interact mt-4 px-6 py-2 border border-white/5 rounded-full text-[9px] uppercase tracking-[0.2em] text-gray-500 hover:text-white transition">Ganti Lokasi</button>
+        </footer>
     </div>
 
     <audio id="adzan" preload="auto"><source src="https://www.islamcan.com/common/adzan/makkah.mp3"></audio>
@@ -86,219 +155,147 @@
         let searchResults = [];
         const audio = document.getElementById('adzan');
         
-        // --- FITUR GPS PRESISI ---
+        // GPS Logic
         window.initGPS = function() {
-            if (!navigator.geolocation) { alert("GPS tidak didukung oleh browser Anda"); return; }
+            if (!navigator.geolocation) return alert("Browser tidak mendukung GPS");
             
             const btn = document.getElementById('gpsBtn');
             const loading = document.getElementById('loading');
-            const loadingText = document.getElementById('loadingText');
-            
-            btn.innerText = "MENGAKSES SENSOR GPS...";
-            btn.disabled = true;
+            btn.classList.add('opacity-50');
             loading.classList.remove('hidden');
-            loadingText.innerText = "Mengunci Sinyal Satelit...";
-
-            const options = {
-                enableHighAccuracy: true, // PAKSA GPS HARDWARE
-                timeout: 15000,           // Tunggu maksimal 15 detik
-                maximumAge: 0             // Data harus fresh, bukan cache
-            };
 
             navigator.geolocation.getCurrentPosition(
                 async (pos) => {
                     const { latitude, longitude, accuracy } = pos.coords;
-                    btn.innerText = "📍 DETEKSI LOKASI GPS (PRESISI)";
-                    btn.disabled = false;
+                    document.getElementById('accuracyLabel').innerText = `Acc: ${accuracy.toFixed(0)}m`;
                     
-                    // Update label akurasi di halaman utama nanti
-                    document.getElementById('accuracyLabel').innerText = `Akurasi: ${accuracy.toFixed(1)} meter`;
-
                     try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`);
                         const data = await res.json();
-                        // Ambil nama jalan/desa jika ada untuk tampilan lebih keren
-                        const addr = data.address;
-                        const simpleName = addr.village || addr.suburb || addr.city || addr.town || "Lokasi Saya";
-                        proceedWithLocation(latitude, longitude, simpleName + ", " + (addr.state || addr.country));
+                        const loc = data.address.city || data.address.town || data.address.village || "Lokasi Anda";
+                        proceedWithLocation(latitude, longitude, loc);
                     } catch {
-                        proceedWithLocation(latitude, longitude, `Koordinat: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                        proceedWithLocation(latitude, longitude, "Lokasi GPS");
                     }
                 },
                 (err) => {
-                    btn.innerText = "📍 DETEKSI LOKASI GPS (PRESISI)";
-                    btn.disabled = false;
                     loading.classList.add('hidden');
-                    let msg = "Gagal mendapatkan lokasi.";
-                    if(err.code === 1) msg = "Izin lokasi ditolak. Aktifkan izin GPS di pengaturan HP.";
-                    if(err.code === 3) msg = "Waktu habis. Pastikan Anda di luar ruangan agar GPS bekerja.";
-                    alert(msg);
+                    btn.classList.remove('opacity-50');
+                    alert("GPS Error: " + err.message);
                 },
-                options
+                { enableHighAccuracy: true, timeout: 15000 }
             );
         };
 
-        // --- FUNGSI PENCARIAN (Nominatim) ---
+        // Search Logic
         let searchTimeout;
         window.doSearch = function() {
             clearTimeout(searchTimeout);
             const q = document.getElementById('searchInput').value.trim();
-            if (q.length < 2) {
-                document.getElementById('suggestions').classList.add('hidden');
-                return;
-            }
+            const box = document.getElementById('suggestions');
+            
+            if (q.length < 3) return box.classList.add('hidden');
             
             searchTimeout = setTimeout(async () => {
-                try {
-                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8&addressdetails=1&accept-language=id`;
-                    const res = await fetch(url, { headers: { 'User-Agent': 'Solihah-App' } });
-                    const data = await res.json();
-                    
-                    if (data && data.length > 0) {
-                        searchResults = data;
-                        const suggestionsDiv = document.getElementById('suggestions');
-                        suggestionsDiv.innerHTML = data.map((item, i) => {
-                            const nameParts = item.display_name.split(',');
-                            const mainName = nameParts[0];
-                            const subName = nameParts.slice(1, 3).join(',');
-                            return `<div class="suggestion-item" onclick="selectResult(${i})">
-                                <div class="flex justify-between">
-                                    <span class="font-medium text-sm">${escapeHtml(mainName)}</span>
-                                    <span class="text-[9px] text-blue-400 uppercase">${item.address?.country_code || ''}</span>
-                                </div>
-                                <div class="text-[10px] text-gray-400 truncate">${escapeHtml(subName)}</div>
-                            </div>`;
-                        }).join('');
-                        suggestionsDiv.classList.remove('hidden');
-                    }
-                } catch (err) { console.error(err); }
-            }, 400);
-        };
-
-        window.selectResult = function(index) {
-            const item = searchResults[index];
-            if (item) {
-                document.getElementById('accuracyLabel').innerText = ""; // Pencarian teks tidak punya akurasi meter
-                proceedWithLocation(parseFloat(item.lat), parseFloat(item.lon), item.display_name);
-            }
-        };
-
-        window.selectFirstResult = function() {
-            if (searchResults.length > 0) selectResult(0);
-        };
-
-        window.showManual = () => document.getElementById('manualBox').classList.toggle('hidden');
-        
-        window.useManual = () => {
-            const lat = parseFloat(document.getElementById('latInput').value);
-            const lon = parseFloat(document.getElementById('lonInput').value);
-            if (isNaN(lat) || isNaN(lon)) { alert("Koordinat tidak valid"); return; }
-            document.getElementById('accuracyLabel').innerText = "";
-            proceedWithLocation(lat, lon, `Manual: ${lat}, ${lon}`);
-        };
-
-        window.backToSetup = () => {
-            if (timer) clearInterval(timer);
-            document.getElementById('main').classList.add('hidden');
-            document.getElementById('setup').classList.remove('hidden');
-            document.getElementById('loading').classList.add('hidden');
-            prayerData = null;
-        };
-
-        // --- CORE LOGIC ---
-        async function proceedWithLocation(lat, lon, name) {
-            const loading = document.getElementById('loading');
-            loading.classList.remove('hidden');
-            document.getElementById('loadingText').innerText = "Menghitung Waktu Shalat...";
-
-            try {
-                // Method 20 = KEMENAG RI (Untuk Indonesia yang sangat akurat)
-                // Jika ingin global standar Liga Muslim Dunia, gunakan method=2
-                const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=20`;
-                const res = await fetch(url);
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1`);
                 const data = await res.json();
-                
-                if (data.code === 200) {
-                    prayerData = data.data.timings;
-                    
-                    document.getElementById('setup').classList.add('hidden');
-                    document.getElementById('main').classList.remove('hidden');
-                    document.getElementById('locName').innerText = name.split(',')[0].toUpperCase();
-                    document.getElementById('coord').innerText = `${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
-                    
-                    renderTimes();
-                    if (timer) clearInterval(timer);
-                    timer = setInterval(updateClock, 1000);
-                    updateClock();
+                if (data.length > 0) {
+                    searchResults = data;
+                    box.innerHTML = data.map((item, i) => `
+                        <div class="suggestion-item flex flex-col" onclick="selectResult(${i})">
+                            <span class="text-sm font-bold text-white">${item.display_name.split(',')[0]}</span>
+                            <span class="text-[10px] text-gray-500 truncate">${item.display_name}</span>
+                        </div>
+                    `).join('');
+                    box.classList.remove('hidden');
                 }
+            }, 500);
+        };
+
+        window.selectResult = (i) => {
+            const item = searchResults[i];
+            proceedWithLocation(parseFloat(item.lat), parseFloat(item.lon), item.display_name.split(',')[0]);
+        };
+
+        async function proceedWithLocation(lat, lon, name) {
+            document.getElementById('loading').classList.remove('hidden');
+            try {
+                const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=20`);
+                const data = await res.json();
+                prayerData = data.data.timings;
+                
+                document.getElementById('setup').classList.add('hidden');
+                document.getElementById('main').classList.remove('hidden');
+                document.getElementById('locName').innerText = name;
+                document.getElementById('coord').innerText = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                
+                renderTimes();
+                if (timer) clearInterval(timer);
+                timer = setInterval(updateUI, 1000);
+                updateUI();
             } catch (err) {
-                alert("Gagal koneksi ke server jadwal.");
+                alert("Gagal memuat jadwal");
             } finally {
-                loading.classList.add('hidden');
+                document.getElementById('loading').classList.add('hidden');
             }
         }
 
         function renderTimes() {
-            if (!prayerData) return;
             const list = [
-                { name: 'Subuh', time: prayerData.Fajr },
-                { name: 'Dzuhur', time: prayerData.Dhuhr },
-                { name: 'Ashar', time: prayerData.Asr },
-                { name: 'Maghrib', time: prayerData.Maghrib },
-                { name: 'Isya', time: prayerData.Isha }
+                {n: 'Subuh', t: prayerData.Fajr},
+                {n: 'Dzuhur', t: prayerData.Dhuhr},
+                {n: 'Ashar', t: prayerData.Asr},
+                {n: 'Maghrib', t: prayerData.Maghrib},
+                {n: 'Isya', t: prayerData.Isha}
             ];
             document.getElementById('timesList').innerHTML = list.map(i => `
-                <div class="flex flex-col items-center">
-                    <span class="text-[7px] text-gray-700 uppercase mb-1">${i.name}</span>
-                    <span class="text-[10px] font-mono text-gray-400">${i.time}</span>
+                <div class="flex flex-col items-center bg-white/5 py-4 rounded-2xl border border-white/5">
+                    <span class="text-[7px] font-black text-gray-500 uppercase mb-2">${i.n}</span>
+                    <span class="text-[11px] font-bold font-mono-custom text-gray-300">${i.t}</span>
                 </div>
             `).join('');
         }
 
-        function updateClock() {
+        function updateUI() {
             const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit' });
-            document.getElementById('date').innerText = now.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
-            
-            if (!prayerData) return;
-            
-            const schedule = [
-                { name: 'Subuh', time: prayerData.Fajr },
-                { name: 'Dzuhur', time: prayerData.Dhuhr },
-                { name: 'Ashar', time: prayerData.Asr },
-                { name: 'Maghrib', time: prayerData.Maghrib },
-                { name: 'Isya', time: prayerData.Isha }
+            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {hour12:false, hour:'2-digit', minute:'2-digit'});
+            document.getElementById('date').innerText = now.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long'});
+
+            const times = [
+                {n: 'Subuh', t: prayerData.Fajr}, {n: 'Dzuhur', t: prayerData.Dhuhr},
+                {n: 'Ashar', t: prayerData.Asr}, {n: 'Maghrib', t: prayerData.Maghrib},
+                {n: 'Isya', t: prayerData.Isha}
             ];
             
             const currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-            let timesSec = schedule.map(s => {
-                let [h, m] = s.time.split(':');
-                return { name: s.name, sec: parseInt(h) * 3600 + parseInt(m) * 60 };
-            });
+            let next = times.map(t => {
+                const [h,m] = t.t.split(':');
+                return {n: t.n, s: parseInt(h)*3600 + parseInt(m)*60};
+            }).find(t => t.s > currentSec);
+
+            if (!next) next = {n: 'Subuh', s: (parseInt(times[0].t.split(':')[0])*3600 + parseInt(times[0].t.split(':')[1])*60) + 86400};
+
+            const diff = next.s - currentSec;
+            const h = Math.floor(diff/3600).toString().padStart(2,'0');
+            const m = Math.floor((diff%3600)/60).toString().padStart(2,'0');
+            const s = (diff%60).toString().padStart(2,'0');
             
-            let next = timesSec.find(s => s.sec > currentSec);
-            if (!next) next = { ...timesSec[0], sec: timesSec[0].sec + 86400 };
-            
-            // Auto-Adzan
-            if (timesSec.some(s => s.sec === currentSec)) {
-                audio.play().catch(() => console.log("User must interact first to play audio"));
-            }
-            
-            const diff = next.sec - currentSec;
-            const dh = Math.floor(diff / 3600).toString().padStart(2,'0');
-            const dm = Math.floor((diff % 3600) / 60).toString().padStart(2,'0');
-            const ds = (diff % 60).toString().padStart(2,'0');
-            
-            document.getElementById('countdown').innerText = `${dh}:${dm}:${ds}`;
-            document.getElementById('nextName').innerText = `Menuju ${next.name}`;
+            document.getElementById('countdown').innerText = `${h}:${m}:${s}`;
+            document.getElementById('nextName').innerText = `Menuju ${next.n}`;
+
+            if (diff === 0) audio.play();
         }
 
-        function escapeHtml(str) {
-            return str ? str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : '';
-        }
-
+        window.showManual = () => document.getElementById('manualBox').classList.toggle('hidden');
+        window.useManual = () => {
+            const lat = parseFloat(document.getElementById('latInput').value);
+            const lon = parseFloat(document.getElementById('lonInput').value);
+            if (!isNaN(lat) && !isNaN(lon)) proceedWithLocation(lat, lon, "Koordinat Manual");
+        };
+        window.backToSetup = () => location.reload();
+        
         document.addEventListener('click', e => {
-            if (!document.getElementById('searchInput').contains(e.target)) 
+            if(!document.getElementById('searchInput').contains(e.target)) 
                 document.getElementById('suggestions').classList.add('hidden');
         });
     </script>
