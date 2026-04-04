@@ -9,72 +9,20 @@
     <style>
         :root { --accent: #3b82f6; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body { 
-            background: #000; 
-            color: #fff; 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Background Decor */
-        .bg-glow {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(0,0,0,0) 70%);
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        /* Glassmorphism */
-        .glass { 
-            background: rgba(255,255,255,0.03); 
-            border: 1px solid rgba(255,255,255,0.08); 
-            backdrop-filter: blur(20px); 
-        }
-
+        body { background: #000; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+        .bg-glow { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; height: 300px; background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(0,0,0,0) 70%); z-index: -1; pointer-events: none; }
+        .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(20px); }
         .glow-text { text-shadow: 0 0 30px rgba(59,130,246,0.6); }
-        
-        .gradient-text { 
-            background: linear-gradient(to bottom, #fff 30%, #94a3b8 100%); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-        }
-
-        /* Animation */
+        .gradient-text { background: linear-gradient(to bottom, #fff 30%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .fade-in { animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .loading-spinner { 
-            border: 2px solid rgba(255,255,255,0.1); 
-            border-top-color: var(--accent); 
-            border-radius: 50%; 
-            width: 28px; height: 28px; 
-            animation: spin 0.8s linear infinite; 
-        }
+        .loading-spinner { border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; width: 28px; height: 28px; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Custom Input & Suggestions */
         input::placeholder { color: #475569; }
-        .suggestion-item { 
-            padding: 16px; 
-            border-bottom: 1px solid rgba(255,255,255,0.05); 
-            transition: 0.2s;
-        }
-        .suggestion-item:last-child { border: none; }
+        .suggestion-item { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; }
         .suggestion-item:active { background: rgba(59,130,246,0.2); }
-
-        .btn-interact {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .btn-interact { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .btn-interact:active { transform: scale(0.96); opacity: 0.8; }
-
-        /* Typography */
         .font-mono-custom { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
     </style>
 </head>
@@ -82,8 +30,8 @@
     <div class="bg-glow"></div>
 
     <!-- UI SETUP -->
-    <div id="setup" class="w-full max-w-sm fade-in">
-        <header class="mb-12 text-center">
+    <div id="setup" class="w-full max-w-sm fade-in text-center">
+        <header class="mb-12">
             <h1 class="text-5xl font-extrabold tracking-tighter italic mb-2">SOLIHAH</h1>
             <p class="text-[10px] uppercase tracking-[0.4em] text-blue-500 font-bold">Precision Prayer Times</p>
         </header>
@@ -95,14 +43,12 @@
 
             <div class="relative group">
                 <input type="text" id="searchInput" onkeyup="doSearch()" 
-                    placeholder="Cari Kota / Desa / Alamat..." 
+                    placeholder="Cari Kota / Kecamatan..." 
                     class="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-6 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-all shadow-inner">
-                <div id="suggestions" class="absolute top-full left-0 right-0 mt-2 glass rounded-2xl overflow-hidden hidden z-50 shadow-2xl"></div>
+                <div id="suggestions" class="absolute top-full left-0 right-0 mt-2 glass rounded-2xl overflow-hidden hidden z-50 shadow-2xl text-left"></div>
             </div>
 
-            <div class="text-center">
-                <button onclick="showManual()" class="text-[10px] uppercase tracking-widest text-gray-500 hover:text-blue-400 transition">Atau Koordinat Manual</button>
-            </div>
+            <button onclick="showManual()" class="text-[10px] uppercase tracking-widest text-gray-500 hover:text-blue-400 transition">Atau Koordinat Manual</button>
 
             <div id="manualBox" class="hidden space-y-2 pt-2 fade-in">
                 <div class="grid grid-cols-2 gap-2">
@@ -124,7 +70,7 @@
         <div class="mb-8 flex flex-col items-center">
             <div class="flex items-center gap-2 mb-2">
                 <span class="w-1 h-1 bg-blue-500 rounded-full animate-ping"></span>
-                <p id="locName" class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 truncate max-w-[250px] text-center">---</p>
+                <p id="locName" class="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 text-center">---</p>
             </div>
             <h1 id="clock" class="text-8xl font-black tracking-tighter leading-none glow-text gradient-text">00:00</h1>
         </div>
@@ -151,18 +97,13 @@
     <audio id="adzan" preload="auto"><source src="https://www.islamcan.com/common/adzan/makkah.mp3"></audio>
 
     <script>
-        let prayerData = null, timer = null;
-        let searchResults = [];
+        let prayerData = null, timer = null, searchResults = [];
         const audio = document.getElementById('adzan');
         
-        // GPS Logic
         window.initGPS = function() {
             if (!navigator.geolocation) return alert("Browser tidak mendukung GPS");
-            
-            const btn = document.getElementById('gpsBtn');
-            const loading = document.getElementById('loading');
-            btn.classList.add('opacity-50');
-            loading.classList.remove('hidden');
+            const btn = document.getElementById('gpsBtn'), loading = document.getElementById('loading');
+            btn.classList.add('opacity-50'); loading.classList.remove('hidden');
 
             navigator.geolocation.getCurrentPosition(
                 async (pos) => {
@@ -170,43 +111,50 @@
                     document.getElementById('accuracyLabel').innerText = `Acc: ${accuracy.toFixed(0)}m`;
                     
                     try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`);
+                        // zoom=18 untuk mendapatkan detail paling dalam (kelurahan/jalan)
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
                         const data = await res.json();
-                        const loc = data.address.city || data.address.town || data.address.village || "Lokasi Anda";
-                        proceedWithLocation(latitude, longitude, loc);
+                        const addr = data.address;
+                        
+                        // Logika Penamaan: [Kota/Kabupaten], [Kecamatan/Kelurahan]
+                        const kabKota = addr.city || addr.town || addr.municipality || addr.county || "";
+                        const kecKel = addr.suburb || addr.village || addr.district || addr.neighbourhood || "";
+                        
+                        let combinedName = kabKota;
+                        if (kecKel) combinedName += `, ${kecKel}`;
+                        if (!combinedName) combinedName = "Lokasi Saya";
+
+                        proceedWithLocation(latitude, longitude, combinedName);
                     } catch {
                         proceedWithLocation(latitude, longitude, "Lokasi GPS");
                     }
                 },
-                (err) => {
-                    loading.classList.add('hidden');
-                    btn.classList.remove('opacity-50');
-                    alert("GPS Error: " + err.message);
-                },
+                (err) => { loading.classList.add('hidden'); btn.classList.remove('opacity-50'); alert("GPS Error: " + err.message); },
                 { enableHighAccuracy: true, timeout: 15000 }
             );
         };
 
-        // Search Logic
-        let searchTimeout;
         window.doSearch = function() {
-            clearTimeout(searchTimeout);
-            const q = document.getElementById('searchInput').value.trim();
-            const box = document.getElementById('suggestions');
-            
+            clearTimeout(this.searchTimeout);
+            const q = document.getElementById('searchInput').value.trim(), box = document.getElementById('suggestions');
             if (q.length < 3) return box.classList.add('hidden');
             
-            searchTimeout = setTimeout(async () => {
+            this.searchTimeout = setTimeout(async () => {
                 const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1`);
                 const data = await res.json();
                 if (data.length > 0) {
                     searchResults = data;
-                    box.innerHTML = data.map((item, i) => `
+                    box.innerHTML = data.map((item, i) => {
+                        const addr = item.address;
+                        const kab = addr.city || addr.town || addr.municipality || addr.county || "";
+                        const kec = addr.suburb || addr.village || addr.district || "";
+                        const label = kec ? `${kab}, ${kec}` : kab || item.display_name.split(',')[0];
+                        return `
                         <div class="suggestion-item flex flex-col" onclick="selectResult(${i})">
-                            <span class="text-sm font-bold text-white">${item.display_name.split(',')[0]}</span>
-                            <span class="text-[10px] text-gray-500 truncate">${item.display_name}</span>
-                        </div>
-                    `).join('');
+                            <span class="text-sm font-bold text-white">${label}</span>
+                            <span class="text-[9px] text-gray-500 truncate">${item.display_name}</span>
+                        </div>`;
+                    }).join('');
                     box.classList.remove('hidden');
                 }
             }, 500);
@@ -214,7 +162,11 @@
 
         window.selectResult = (i) => {
             const item = searchResults[i];
-            proceedWithLocation(parseFloat(item.lat), parseFloat(item.lon), item.display_name.split(',')[0]);
+            const addr = item.address;
+            const kab = addr.city || addr.town || addr.municipality || addr.county || "";
+            const kec = addr.suburb || addr.village || addr.district || "";
+            const label = kec ? `${kab}, ${kec}` : kab || item.display_name.split(',')[0];
+            proceedWithLocation(parseFloat(item.lat), parseFloat(item.lon), label);
         };
 
         async function proceedWithLocation(lat, lon, name) {
@@ -223,81 +175,49 @@
                 const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=20`);
                 const data = await res.json();
                 prayerData = data.data.timings;
-                
                 document.getElementById('setup').classList.add('hidden');
                 document.getElementById('main').classList.remove('hidden');
-                document.getElementById('locName').innerText = name;
+                document.getElementById('locName').innerText = name.replace("Kabupaten ", "").replace("Kota ", ""); // Bersihkan prefix agar lebih minimalis
                 document.getElementById('coord').innerText = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-                
                 renderTimes();
                 if (timer) clearInterval(timer);
                 timer = setInterval(updateUI, 1000);
                 updateUI();
-            } catch (err) {
-                alert("Gagal memuat jadwal");
-            } finally {
-                document.getElementById('loading').classList.add('hidden');
-            }
+            } catch (err) { alert("Gagal memuat jadwal"); }
+            finally { document.getElementById('loading').classList.add('hidden'); }
         }
 
         function renderTimes() {
-            const list = [
-                {n: 'Subuh', t: prayerData.Fajr},
-                {n: 'Dzuhur', t: prayerData.Dhuhr},
-                {n: 'Ashar', t: prayerData.Asr},
-                {n: 'Maghrib', t: prayerData.Maghrib},
-                {n: 'Isya', t: prayerData.Isha}
-            ];
+            const list = [{n:'Subuh',t:prayerData.Fajr},{n:'Dzuhur',t:prayerData.Dhuhr},{n:'Ashar',t:prayerData.Asr},{n:'Maghrib',t:prayerData.Maghrib},{n:'Isya',t:prayerData.Isha}];
             document.getElementById('timesList').innerHTML = list.map(i => `
                 <div class="flex flex-col items-center bg-white/5 py-4 rounded-2xl border border-white/5">
                     <span class="text-[7px] font-black text-gray-500 uppercase mb-2">${i.n}</span>
                     <span class="text-[11px] font-bold font-mono-custom text-gray-300">${i.t}</span>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
         function updateUI() {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {hour12:false, hour:'2-digit', minute:'2-digit'});
             document.getElementById('date').innerText = now.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long'});
-
-            const times = [
-                {n: 'Subuh', t: prayerData.Fajr}, {n: 'Dzuhur', t: prayerData.Dhuhr},
-                {n: 'Ashar', t: prayerData.Asr}, {n: 'Maghrib', t: prayerData.Maghrib},
-                {n: 'Isya', t: prayerData.Isha}
-            ];
-            
+            const times = [{n:'Subuh',t:prayerData.Fajr},{n:'Dzuhur',t:prayerData.Dhuhr},{n:'Ashar',t:prayerData.Asr},{n:'Maghrib',t:prayerData.Maghrib},{n:'Isya',t:prayerData.Isha}];
             const currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-            let next = times.map(t => {
-                const [h,m] = t.t.split(':');
-                return {n: t.n, s: parseInt(h)*3600 + parseInt(m)*60};
-            }).find(t => t.s > currentSec);
-
-            if (!next) next = {n: 'Subuh', s: (parseInt(times[0].t.split(':')[0])*3600 + parseInt(times[0].t.split(':')[1])*60) + 86400};
-
+            let next = times.map(t => { const [h,m] = t.t.split(':'); return {n: t.n, s: parseInt(h)*3600 + parseInt(m)*60}; }).find(t => t.s > currentSec);
+            if (!next) next = {n:'Subuh', s: (parseInt(times[0].t.split(':')[0])*3600 + parseInt(times[0].t.split(':')[1])*60) + 86400};
             const diff = next.s - currentSec;
-            const h = Math.floor(diff/3600).toString().padStart(2,'0');
-            const m = Math.floor((diff%3600)/60).toString().padStart(2,'0');
-            const s = (diff%60).toString().padStart(2,'0');
-            
+            const h = Math.floor(diff/3600).toString().padStart(2,'0'), m = Math.floor((diff%3600)/60).toString().padStart(2,'0'), s = (diff%60).toString().padStart(2,'0');
             document.getElementById('countdown').innerText = `${h}:${m}:${s}`;
             document.getElementById('nextName').innerText = `Menuju ${next.n}`;
-
             if (diff === 0) audio.play();
         }
 
         window.showManual = () => document.getElementById('manualBox').classList.toggle('hidden');
         window.useManual = () => {
-            const lat = parseFloat(document.getElementById('latInput').value);
-            const lon = parseFloat(document.getElementById('lonInput').value);
+            const lat = parseFloat(document.getElementById('latInput').value), lon = parseFloat(document.getElementById('lonInput').value);
             if (!isNaN(lat) && !isNaN(lon)) proceedWithLocation(lat, lon, "Koordinat Manual");
         };
         window.backToSetup = () => location.reload();
-        
-        document.addEventListener('click', e => {
-            if(!document.getElementById('searchInput').contains(e.target)) 
-                document.getElementById('suggestions').classList.add('hidden');
-        });
+        document.addEventListener('click', e => { if(!document.getElementById('searchInput').contains(e.target)) document.getElementById('suggestions').classList.add('hidden'); });
     </script>
 </body>
 </html>
